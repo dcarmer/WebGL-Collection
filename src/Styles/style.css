@@ -1,0 +1,577 @@
+*
+{
+	margin:0;
+	padding:0;
+	font-family:Arial;
+	position:relative;
+	outline:none;
+	box-sizing:border-box;
+}
+svg
+{
+	width:100%;
+	height:100%;
+}
+code
+{
+	white-space: pre;
+	font-family:monospace;
+	
+	display:block; //Required for :first-line effects
+}
+code::first-line
+{
+	user-select:none;
+	line-height:0; //To allow indenting code from tags as normal
+}
+
+figure
+{
+	outline: 1px dashed dimgray;
+}
+figcaption
+{
+	display:flex;
+}
+figcaption > :first-child
+{
+	flex:1;
+}
+
+figcaption.title
+{
+	border-bottom:1px solid white;
+}
+figcaption.overlay
+{
+	z-index: 1;
+	position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+}
+
+
+html
+{
+	display: flex;
+    justify-content: center;
+	align-items: center;
+	background-color:black;
+	color:white;
+}
+body
+{
+	display: flex;
+    justify-content: space-around;
+    align-items: center;
+    flex-direction: column;
+    width: 100%;
+}
+
+main
+{
+	display: flex;
+    flex-wrap: wrap;
+    justify-content: space-around;
+    align-items: center;
+    width: 80%;
+    flex: 1;
+}
+
+.PlaybackControls
+{
+	position: absolute;
+	bottom:0;
+	left:0;
+	right:0;
+	display: flex;
+    justify-content: space-between;
+	align-items:center;
+}
+.PlaybackControls button
+{
+	height:40px;
+	width:40px;
+	cursor:pointer;
+	fill:white;
+	background:transparent;
+	border:none;
+	padding: 0;
+	display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.PlaybackControls .PlayButton,
+.PlaybackControls .AudioButton
+{
+	padding: 10px;
+}
+.PlaybackControls .AudioButton
+
+
+.Play,
+.paused .Pause
+{
+	opacity:0;
+}
+.paused .Play
+{
+	opacity:1;
+}
+
+/* Fails to match if used with multiple selectors: https://chris.improbable.org/experiments/browser/fullscreen-selector-bug.html */
+.ExitFullscreen,
+:fullscreen 			.EnterFullscreen {opacity: 0;}
+:-moz-full-screen 		.EnterFullscreen {opacity: 0;}
+:-webkit-full-screen 	.EnterFullscreen {opacity: 0;}
+
+:fullscreen 			.ExitFullscreen {opacity: 1;}
+:-moz-full-screen 		.ExitFullscreen {opacity: 1;}
+:-webkit-full-screen 	.ExitFullscreen {opacity: 1;}
+
+
+
+
+
+.overlay
+{
+	pointer-events:none;
+	position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    box-shadow: inset 0px 0px 20px 0px hsla(0, 0%, 5%, 1);
+	opacity:0;
+	transition: opacity .2s;
+
+}
+.overlay > *
+{
+	pointer-events: auto;
+}
+figure.paused .overlay,
+figure:hover .overlay
+{
+	opacity:1;
+
+}
+
+
+
+.webgl
+{
+	width:512px;
+	height:512px;
+	margin:20px;
+}
+canvas
+{
+	user-select: none;
+	width:100%;
+	height:100%;
+}
+.PlayNotification
+{
+	pointer-events:none;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    height: auto;
+	width: 15%;
+	opacity:0;
+    transform: translate(-50%,-50%);
+    display: flex;
+
+    border-radius: 50%;
+    background: black;
+	
+	animation-name: PulseOut, Hide;
+	animation-duration: .4s;
+	animation-timing-function: linear;
+	animation-direction: normal;
+}
+.PlayNotification:before
+{
+	content: "";
+    padding-top: 100%;
+}
+.PlayNotification .PlayIcon
+{
+	position: absolute;
+    padding: 35%;
+}
+.PlayNotification .PlayIcon:after
+{
+	transition:none;
+}
+/* 
+Animation names have to change to trigger play, so duplicated PulseOut@keyframes 
+Additional Redundant animation name to hide initial play
+*/
+figure.paused .PlayNotification
+{
+	animation-name: PulseOut2, Hide;
+}
+/*TODO  only display notify via body click, not button and cap max size*/
+@keyframes Hide 
+{
+  from, to {opacity:0;}
+}
+@keyframes PulseOut
+{
+  from 
+  {
+	opacity:.5;
+	width: 15%;
+  }
+  to 
+  {
+	opacity:0;
+	width: 25%;
+  }
+}
+@keyframes PulseOut2
+{
+  from 
+  {
+	opacity:.5;
+	width: 15%;
+  }
+  to 
+  {
+	opacity:0;
+	width: 25%;
+  }
+}
+.TimeDisplay
+{
+	display: flex;
+    flex:1;
+    align-items: center;
+	font-family:monospace;
+	font-size:18px;
+	padding:8px;
+}
+
+.FullscreenButton:hover use
+{
+	transform:translate(-10px, -10px);
+}
+
+
+
+
+
+.FullscreenIcon
+{
+	display:inline-grid;
+	grid-auto-columns: min-content;
+	grid-gap: 4.5px;
+	width: min-content;
+	height:min-content;
+}
+.FullscreenIcon > *
+{
+	width:6.75px;
+	height:6.75px;
+	transition: transform .2s linear;
+	border: 2px solid white;
+}
+
+
+.FullscreenIcon > :nth-child(-n+2) /* Top 2 */
+{
+	border-bottom:none;
+	grid-row-start: 1;
+}
+:fullscreen				.FullscreenIcon > :nth-child(-n+2) {grid-row-start: 2;}
+:-moz-full-screen		.FullscreenIcon > :nth-child(-n+2) {grid-row-start: 2;}
+:-webkit-full-screen	.FullscreenIcon > :nth-child(-n+2) {grid-row-start: 2;}
+
+.FullscreenIcon > :nth-last-child(-n+2) /* Bottom 2 */
+{
+	border-top:none;
+	grid-row-start: 2;
+}
+:fullscreen				.FullscreenIcon > :nth-last-child(-n+2) {grid-row-start: 1;}
+:-moz-full-screen 		.FullscreenIcon > :nth-last-child(-n+2) {grid-row-start: 1;}
+:-webkit-full-screen	.FullscreenIcon > :nth-last-child(-n+2) {grid-row-start: 1;}
+
+.FullscreenIcon > :nth-child(odd) /* Left 2 */
+{
+	border-right:none;
+	grid-column-start: 1;
+}
+:fullscreen				.FullscreenIcon > :nth-child(odd) {grid-column-start: 2;}
+:-moz-full-screen 		.FullscreenIcon > :nth-child(odd) {grid-column-start: 2;}
+:-webkit-full-screen	.FullscreenIcon > :nth-child(odd) {grid-column-start: 2;}
+
+.FullscreenIcon > :nth-child(even) /* Right 2 */
+{
+	border-left:none;
+	grid-column-start: 2;
+}
+:fullscreen				.FullscreenIcon > :nth-child(even) {grid-column-start: 1;}
+:-moz-full-screen 		.FullscreenIcon > :nth-child(even) {grid-column-start: 1;}
+:-webkit-full-screen	.FullscreenIcon > :nth-child(even) {grid-column-start: 1;}
+
+
+.FullscreenButton:hover .FullscreenIcon > :nth-child(1)
+{
+	transform: translate(-1px, -1px);
+}
+.FullscreenButton:hover .FullscreenIcon > :nth-child(2)
+{
+	transform: translate(1px, -1px);
+}
+.FullscreenButton:hover .FullscreenIcon > :nth-child(3)
+{
+	transform: translate(-1px, 1px);
+}
+.FullscreenButton:hover .FullscreenIcon > :nth-child(4)
+{
+	transform: translate(1px, 1px);
+}
+
+
+/*Border Pause/Play Transition aproach test2 */
+.test2
+{
+	width: fit-content;
+	display: inline-flex;
+	align-items: center;
+}
+.test2:before,
+.test2:after
+{
+	content:"";
+	
+	border-left: 50px solid blue;
+    border-top: 25px solid transparent;
+    border-bottom: 25px solid transparent;
+    border-right: 0px solid transparent;
+	
+	display: inline-block;
+    transition: border 0.4s, width 0.4s, height 0.4s, margin 0.4s;
+}
+.test2:before
+{
+    height: 50px;
+}
+.test2:after
+{
+	height: 0px;
+}
+
+
+.test2:hover:before,
+.test2:hover:after
+{
+	height: 100px;
+	border-left: 38px solid red;
+    border-top: 0 solid transparent;
+    border-bottom: 0 solid transparent;
+}
+.test2:hover:before
+{
+	border-right: calc(100px - 2 * 38px) solid transparent;	
+}
+
+
+.PlayIcon
+{
+	width: 100%;
+    height: 100%;
+	    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.PlayIcon:after
+{
+	content:"";
+	width: 80%;
+    padding-top: 100%;
+    display: inline-block;
+	
+	background: white;
+	clip-path: polygon(50% 75%, 0% 100%, 0% 0%, 50% 25%, 50% 75%, 50% 75%, 50% 25%, 100% 50%, 100% 50%, 50% 75%);
+	transition: clip-path .4s;
+}
+
+/*Show Pause*/
+.PlayIcon:after,
+.paused .PlayNotification .PlayIcon:after
+{
+	clip-path: polygon(33% 100%, 0% 100%, 0% 0%, 33% 0%, 33% 100%, 67% 100%, 67% 0%, 100% 0%, 100% 100%, 67% 100%);
+	
+}
+/* Show Play */
+.paused .PlayIcon:after,
+.PlayNotification .PlayIcon:after
+{
+	clip-path: polygon(50% 75%, 0% 100%, 0% 0%, 50% 25%, 50% 75%, 50% 75%, 50% 25%, 100% 50%, 100% 50%, 50% 75%);
+}
+
+.ReplayButton > * 
+{
+	padding:5px;
+    padding-top:7px;
+}
+.ReplayButton > * 
+{
+    transition: transform .4s;
+}
+.ReplayButton:hover > * 
+{
+    transform: rotate(-44deg);
+}
+
+#ReplaySymbol > *
+{
+	user-select:none;
+	font-size:12px;
+	font-weight: bold;
+    text-anchor: middle;
+    dominant-baseline: central;
+    transform: rotate(-45deg) translate(0,1.5%);
+    transform-origin: center;
+}
+
+.overlay header
+{
+	display: flex;
+}
+.overlay .title
+{
+	flex: 1;
+}
+
+
+/* Audio Icon Volume Transition */
+.AudioSpeaker .Waves
+{
+	clip-path: circle(50%);
+}
+
+/* Audio Icon Mute Transition */
+.AudioSpeaker,
+.AudioSpeakerSlash
+{
+	transition: clip-path 1s;
+}
+.AudioSpeaker
+{
+	clip-path: polygon(10% -10%, 10% -10%, 0% 0%, 0% 0%, 10% -10%, 0% 0%, 0% 100%, 100% 100%, 100% 0%, 0% 0%);
+}
+.muted .AudioSpeaker
+{
+	clip-path: polygon(10% -10%, 110% 90%, 100% 100%, 0% 0%, 10% -10%, 0% 0%, 0% 100%, 100% 100%, 100% 0%, 0% 0%);
+}
+.AudioSpeakerSlash
+{
+	clip-path: polygon(50% -50%, 50% -50%, -50% 50%, -50% 50%);
+}
+.muted .AudioSpeakerSlash
+{
+	clip-path: polygon(50% -50%, 150% 50%, 50% 150%, -50% 50%);
+}
+
+/* Generic Sliders = Root */
+input[type=range]
+{
+	-webkit-appearance: none;
+	color: currentColor;
+}
+/* Generic Sliders = Container */
+input[type="range" i]::-webkit-slider-container
+{
+	z-index: inherit;
+}
+/* Generic Sliders = Thumb */
+input[type=range]::-webkit-slider-thumb 
+{
+	-webkit-appearance: none;
+}
+
+
+.PlaybackControls button:focus,
+.AudioSliderPanel:focus-within
+{
+	outline: 1px solid orange;
+	outline-offset: -1px;
+}
+
+.AudioSliderPanel
+{
+	align-self: stretch;
+    overflow: hidden;
+    display: flex;
+	align-items: center;
+    width: 0px;
+    transition: width .4s;
+}
+.AudioSliderPanel:hover,
+.AudioSliderPanel:focus-within,
+.AudioButton:hover + .AudioSliderPanel
+{
+    width: 60px;
+}
+
+/* Slider = Container */
+.webgl input[type=range]
+{
+	background: linear-gradient(to right, currentColor  100%, #ffffff33 0%);
+    width: 60px;
+    border-radius: 100vw;
+    height: 4px;
+    cursor: pointer;
+}
+
+/* Slider = Track */
+.webgl input[type=range]::-webkit-slider-runnable-track 
+{
+
+}
+/* Slider = Thumb */
+.webgl input[type=range]::-webkit-slider-thumb
+{
+	width: 10px;
+	height: 10px;
+	background: white; 
+	border-radius: 50%;
+}
+
+body > header
+{
+	width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    flex-direction: column;
+	flex:.25;
+}
+
+
+#Prev, #Next
+{
+	position:fixed;
+	font-weight:bold;
+	font-size: xx-large;
+	text-decoration:none;
+	color:white;
+	background: #ffffff33;
+	padding:20px;
+	top: 50vh;
+}
+#Prev
+{
+	left:0;
+}
+#Next
+{
+	right:0;
+}

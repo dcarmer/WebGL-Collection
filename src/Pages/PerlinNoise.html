@@ -1,0 +1,404 @@
+<html>
+<head>
+	<title>WebGL Collection - Perlin Noise</title>
+	<link rel="stylesheet" type="text/css" href="../Styles/style.css" />
+	<script id="noise_vshader" type="x-shader/x-vertex">
+		attribute vec4 vPosition; //Vertex Position
+		attribute vec4 vColor; //Vertex color
+
+		varying vec4 fColor; //Fragment Color
+
+		void main() 
+		{
+			fColor = vColor;
+			gl_Position = vPosition;
+		}
+	</script>
+	<script id="noise2d_fshader" type="x-shader/x-fragment">
+		#define PI    3.1415926535897932384626433832795
+		#define TAU   6.2831853071795864769252867665590
+		#define SQRT2 1.4142135623730950488016887242096
+		
+		precision mediump float;
+
+		varying vec4 fColor; //Fragment Color
+		
+		//const mat2 m = mat2( 0.80,  0.60, -0.60,  0.80 );
+		
+		uniform float frequency;// = 10.0;
+		uniform float amplitude;// = .5;
+		uniform float lacunarity;// = 2.0;
+		uniform float gain;// = .5;
+		uniform float seed;// = 127.457;
+		uniform vec2 resolution;// = 127.457;
+		uniform float time;
+		
+		float random(in vec2 p)
+		{
+		   return fract(sin(dot(p+seed,vec2(12.9898,78.233))) * 43758.5453);
+		}
+		vec2 unit2D(in vec2 p)
+		{
+			float r = random(p)*TAU;
+			return vec2(cos(r),sin(r));
+		}
+
+		float pnoise(in vec2 p) 
+		{
+			vec2 f = fract(p);
+			p = floor(p);
+			
+			vec2 u = f*f*f*(f*(f*6.0-15.0)+10.0);
+			
+			return mix( mix( dot( unit2D(p + vec2(0.0,0.0) ), f - vec2(0.0,0.0) ),
+							 dot( unit2D(p + vec2(1.0,0.0) ), f - vec2(1.0,0.0) ), u.x),
+						mix( dot( unit2D(p + vec2(0.0,1.0) ), f - vec2(0.0,1.0) ),
+							 dot( unit2D(p + vec2(1.0,1.0) ), f - vec2(1.0,1.0) ), u.x), u.y)*SQRT2;
+		}
+		float fbm4( vec2 p )
+		{
+			float f = 0.0;
+			float amp = amplitude;
+			float range = 0.0;
+			
+			p *= frequency;
+			f += pnoise(p)*amp; range+=amp; amp*=gain; p *= lacunarity;
+			f += pnoise(p)*amp; range+=amp; amp*=gain; p *= lacunarity;
+			f += pnoise(p)*amp; range+=amp; amp*=gain; p *= lacunarity;
+			f += pnoise(p)*amp; range+=amp; amp*=gain; p *= lacunarity;
+			return f/range;
+		}
+
+		void main()
+		{
+			float res = 512.0;
+			vec2 p = (gl_FragCoord.xy+time*.03)/res;
+			float n = fbm4(p);
+			
+			gl_FragColor = vec4(vec3(n*.5+.5), 1.0);
+		}
+	</script>
+	<script id="noise3d_fshader" type="x-shader/x-fragment">
+		#define PI    3.1415926535897932384626433832795
+		#define TAU   6.2831853071795864769252867665590
+		#define SQRT2 1.4142135623730950488016887242096
+		#define TWO_SQRT3 1.15470053838
+		
+		precision mediump float;
+
+		varying vec4 fColor; //Fragment Color
+		
+		//const mat2 m = mat2( 0.80,  0.60, -0.60,  0.80 );
+		
+		uniform float frequency;// = 10.0;
+		uniform float amplitude;// = .5;
+		uniform float lacunarity;// = 2.0;
+		uniform float gain;// = .5;
+		uniform float seed;// = 127.457;
+		uniform vec2 resolution;// = 127.457;
+		uniform float time;
+		
+		float random(in vec2 p)
+		{
+		   return fract(sin(dot(p+seed,vec2(12.9898,78.233))) * 43758.5453);
+		}
+		vec3 unit3D(in vec3 p)
+		{
+			float r = random(p.xy)*TAU;
+			float z = random(vec2(p.x*p.y,p.z))*2.0-1.0;
+			float d = sqrt(1.0-z*z);
+			return vec3(cos(r),sin(r),z);
+		}
+
+		float pnoise(in vec3 p) 
+		{
+			vec3 f = fract(p);
+			p = floor(p);
+			
+			vec3 u = f*f*f*(f*(f*6.0-15.0)+10.0);
+			
+			return mix( mix( mix( dot( unit3D(p + vec3(0.0,0.0,0.0) ), f - vec3(0.0,0.0,0.0) ),
+								  dot( unit3D(p + vec3(1.0,0.0,0.0) ), f - vec3(1.0,0.0,0.0) ), u.x),
+							 mix( dot( unit3D(p + vec3(0.0,1.0,0.0) ), f - vec3(0.0,1.0,0.0) ),
+								  dot( unit3D(p + vec3(1.0,1.0,0.0) ), f - vec3(1.0,1.0,0.0) ), u.x), u.y),
+						mix( mix( dot( unit3D(p + vec3(0.0,0.0,1.0) ), f - vec3(0.0,0.0,1.0) ),
+								  dot( unit3D(p + vec3(1.0,0.0,1.0) ), f - vec3(1.0,0.0,1.0) ), u.x),
+							 mix( dot( unit3D(p + vec3(0.0,1.0,1.0) ), f - vec3(0.0,1.0,1.0) ),
+								  dot( unit3D(p + vec3(1.0,1.0,1.0) ), f - vec3(1.0,1.0,1.0) ), u.x), u.y), u.z)*TWO_SQRT3;
+		}
+		float fbm4( vec3 p )
+		{
+			float f = 0.0;
+			float amp = amplitude;
+			float range = 0.0;
+			
+			p *= frequency;
+			f += pnoise(p)*amp; range+=amp; amp*=gain; p *= lacunarity;
+			f += pnoise(p)*amp; range+=amp; amp*=gain; p *= lacunarity;
+			f += pnoise(p)*amp; range+=amp; amp*=gain; p *= lacunarity;
+			f += pnoise(p)*amp; range+=amp; amp*=gain; p *= lacunarity;
+			return f/range;
+		}
+
+		void main()
+		{
+			float res = 512.0;
+			vec2 p = (gl_FragCoord.xy)/res;
+
+			float n = fbm4(vec3(p,time*.00005));
+			
+			gl_FragColor = vec4(vec3(n*.5+.5), 1.0);
+		}
+	</script>
+	<script id="noise2dWarp_fshader" type="x-shader/x-fragment">
+	#define PI    3.1415926535897932384626433832795
+	#define TAU   6.2831853071795864769252867665590
+	#define SQRT2 1.4142135623730950488016887242096
+	
+	precision mediump float;
+
+	varying vec4 fColor; //Fragment Color
+	
+	//const mat2 m = mat2( 0.80,  0.60, -0.60,  0.80 );
+	
+	uniform float frequency;// = 10.0;
+	uniform float amplitude;// = .5;
+	uniform float lacunarity;// = 2.0;
+	uniform float gain;// = .5;
+	uniform float seed;// = 127.457;
+	uniform vec2 resolution;// = 127.457;
+	uniform float time;
+	
+	float random(in vec2 p)
+	{
+	   return fract(sin(dot(p+seed,vec2(12.9898,78.233))) * 43758.5453);
+	}
+	vec2 unit2D(in vec2 p)
+	{
+		float r = random(p)*TAU;
+		return vec2(cos(r),sin(r));
+	}
+
+	float pnoise(in vec2 p) 
+	{
+		vec2 f = fract(p);
+		p = floor(p);
+		
+		vec2 u = f*f*f*(f*(f*6.0-15.0)+10.0);
+		
+		return mix( mix( dot( unit2D(p + vec2(0.0,0.0) ), f - vec2(0.0,0.0) ),
+						 dot( unit2D(p + vec2(1.0,0.0) ), f - vec2(1.0,0.0) ), u.x),
+					mix( dot( unit2D(p + vec2(0.0,1.0) ), f - vec2(0.0,1.0) ),
+						 dot( unit2D(p + vec2(1.0,1.0) ), f - vec2(1.0,1.0) ), u.x), u.y)*SQRT2;
+	}
+	const mat2 rot = mat2(cos(0.5), sin(0.5),
+                    -sin(0.5), cos(0.50));
+	float fbm4( vec2 p )
+	{
+		float f = 0.0;
+		float amp = amplitude;
+		float range = 0.0;
+		
+		p *= frequency;
+		f += pnoise(p)*amp; range+=amp; amp*=gain; p = rot*p*lacunarity;
+		f += pnoise(p)*amp; range+=amp; amp*=gain; p = rot*p*lacunarity;
+		f += pnoise(p)*amp; range+=amp; amp*=gain; p = rot*p*lacunarity;
+		f += pnoise(p)*amp; range+=amp; amp*=gain; p = rot*p*lacunarity;
+		f += pnoise(p)*amp; range+=amp; amp*=gain; p = rot*p*lacunarity;
+		return f/range;
+	}
+
+	void main()
+	{
+		float res = 512.0;
+		vec2 p = (gl_FragCoord.xy)/res;
+
+		
+		vec2 q = vec2(fbm4(p),fbm4(p+vec2(1.0)));
+		
+		vec2 r = vec2(
+					fbm4(p+.1*q+vec2(1.7,9.2)+0.000005*time),
+					fbm4(p+.1*q+vec2(8.3,2.8)+0.00001*time));
+		
+		float n = fbm4(p+r);
+		
+		
+		vec3 color = mix(vec3(0.101961,0.619608,0.666667),
+						 vec3(0.666667,0.666667,0.498039),
+						 min(n*n*4.0,1.0));
+		color = mix(color,
+					vec3(0,0,0.164706),
+					min(length(q),1.0));
+		color = mix(color,
+                vec3(0.666667,1,1),
+                abs(r.x));
+		color = color*smoothstep(0.0,1.0,n*.5+.5);
+		//(n*n*n+.6*n*n+.5*n)
+
+		gl_FragColor = vec4(color, 1.0);
+	}
+</script>
+</head>
+
+
+<body>
+<svg style="display:none">
+	<symbol id="ReplaySymbol" viewBox="0 0 14 14">
+		<text x="50%" y="50%">&#x2B6F;</text>
+	</symbol>
+	
+	<symbol id="AudioSpeakerSymbol" viewBox="0 0 18 18">
+		<!-- Speaker Triangle -->
+		<polygon points="9,1 9,17 1,9" />
+		<!-- Speaker Box -->
+		<rect x="0" y="6" width="4" height="6" /> 
+	</symbol>
+	
+	<symbol id="AudioSpeakerWavesSymbol" viewBox="0 0 18 18">
+		<!-- Filler for easier CSS -->
+		<rect x="0" y="0" width="100%" height="100%" style="visibility: hidden;" />
+		<!-- Big Wave -->
+		<path d="M11,.23 A9,9,0,0,1,11,17.769 L11,15.694 A7,7,0,0,0,11,2.305 z" />
+		<!-- Small Wave -->
+		<path d="M11,4.955 A4.5,4.5,0,0,1,11,13.044 z" />
+	</symbol>
+	
+	<symbol id="AudioSpeakerSlashSymbol" viewBox="0 0 18 18">
+		<polygon points="1.5,.5 17.5,16.5 16,18 0,2" />
+	</symbol>
+	
+</svg>
+
+
+
+<header>
+	<h1>Perlin Noise</h1>
+	<h3>Dakota Carmer</h3>
+</header>
+<a href="Home.html" id="Prev">&lt;</a>
+<a href="WorleyNoise.html" id="Next">&gt;</a>
+<main>
+<figure class="webgl" id="Noise2D" alt="2D Fractal Perlin Noise" data-vert="noise_vshader" data-frag="noise2d_fshader"></figure>
+<figure class="webgl" id="Noise3D" alt="3D Fractal Perlin Noise" data-vert="noise_vshader" data-frag="noise3d_fshader"></figure>
+<figure class="webgl" id="Noise2DWarp" alt="2D Warped Fractal Perlin Noise" data-vert="noise_vshader" data-frag="noise2dWarp_fshader"></figure>
+</main>
+</body>
+<script src="../JS/script.js"></script>
+
+
+
+<script>
+{
+	const vertices = new Float32Array([
+		-1.0, -1.0,  0.0, 1.0,
+		-1.0,  1.0,  0.0, 1.0,
+		 1.0,  1.0,  0.0, 1.0,
+		 1.0, -1.0,  0.0, 1.0,
+	  ]);
+	const indices = new Uint8Array([
+		1, 0, 3,    3, 2, 1,
+	  ]);
+
+	let Noise2D = document.getElementById("Noise2D");
+	Noise2D.GLI.setupArrayBuff(vertices,"vPosition");
+	Noise2D.GLI.setupIndexBuff(indices, true);
+
+	const frequencyLoc = Noise2D.GLI.getUniformLocation("frequency");
+	const amplitudeLoc = Noise2D.GLI.getUniformLocation("amplitude");
+	const lacunarityLoc = Noise2D.GLI.getUniformLocation("lacunarity");
+	const gainLoc = Noise2D.GLI.getUniformLocation("gain");
+	const seedLoc = Noise2D.GLI.getUniformLocation("seed");
+
+	Noise2D.GLI.setUniformValue_F(frequencyLoc,10);
+	Noise2D.GLI.setUniformValue_F(amplitudeLoc,.5);
+	Noise2D.GLI.setUniformValue_F(lacunarityLoc,2);
+	Noise2D.GLI.setUniformValue_F(gainLoc,.5);
+	Noise2D.GLI.setUniformValue_F(seedLoc,123);
+
+	Noise2D.addEventListener("render",(event)=>
+	{
+		/* Clear */
+		Noise2D.GLI.clear();
+		/* Draw */
+		Noise2D.GLI.drawTriangles(indices.length);
+	});
+}
+</script>
+
+<script>
+{
+	const vertices = new Float32Array([
+		-1.0, -1.0,  0.0, 1.0,
+		-1.0,  1.0,  0.0, 1.0,
+		 1.0,  1.0,  0.0, 1.0,
+		 1.0, -1.0,  0.0, 1.0,
+	  ]);
+	const indices = new Uint8Array([
+		1, 0, 3,    3, 2, 1,
+	  ]);
+
+	let Noise3D = document.getElementById("Noise3D");
+	Noise3D.GLI.setupArrayBuff(vertices,"vPosition");
+	Noise3D.GLI.setupIndexBuff(indices, true);
+
+	const frequencyLoc = Noise3D.GLI.getUniformLocation("frequency");
+	const amplitudeLoc = Noise3D.GLI.getUniformLocation("amplitude");
+	const lacunarityLoc = Noise3D.GLI.getUniformLocation("lacunarity");
+	const gainLoc = Noise3D.GLI.getUniformLocation("gain");
+	const seedLoc = Noise3D.GLI.getUniformLocation("seed");
+
+	Noise3D.GLI.setUniformValue_F(frequencyLoc,10);
+	Noise3D.GLI.setUniformValue_F(amplitudeLoc,.5);
+	Noise3D.GLI.setUniformValue_F(lacunarityLoc,2);
+	Noise3D.GLI.setUniformValue_F(gainLoc,.5);
+	Noise3D.GLI.setUniformValue_F(seedLoc,123);
+
+	Noise3D.addEventListener("render",(event)=>
+	{
+		/* Clear */
+		Noise3D.GLI.clear();
+		/* Draw */
+		Noise3D.GLI.drawTriangles(indices.length);
+	});
+};
+</script>
+
+<script>
+{
+	const vertices = new Float32Array([
+		-1.0, -1.0,  0.0, 1.0,
+		-1.0,  1.0,  0.0, 1.0,
+		 1.0,  1.0,  0.0, 1.0,
+		 1.0, -1.0,  0.0, 1.0,
+	  ]);
+	const indices = new Uint8Array([
+		1, 0, 3,    3, 2, 1,
+	  ]);
+
+	let WarpNoise2D = document.getElementById("Noise2DWarp");
+		WarpNoise2D.GLI.setupArrayBuff(vertices,"vPosition");
+		WarpNoise2D.GLI.setupIndexBuff(indices, true);
+
+	const frequencyLoc = WarpNoise2D.GLI.getUniformLocation("frequency");
+	const amplitudeLoc = WarpNoise2D.GLI.getUniformLocation("amplitude");
+	const lacunarityLoc = WarpNoise2D.GLI.getUniformLocation("lacunarity");
+	const gainLoc = WarpNoise2D.GLI.getUniformLocation("gain");
+	const seedLoc = WarpNoise2D.GLI.getUniformLocation("seed");
+
+	WarpNoise2D.GLI.setUniformValue_F(frequencyLoc,3);
+	WarpNoise2D.GLI.setUniformValue_F(amplitudeLoc,.5);
+	WarpNoise2D.GLI.setUniformValue_F(lacunarityLoc,2);
+	WarpNoise2D.GLI.setUniformValue_F(gainLoc,.5);
+	WarpNoise2D.GLI.setUniformValue_F(seedLoc,1234);
+
+	WarpNoise2D.addEventListener("render",(event)=>
+	{
+		/* Clear */
+		WarpNoise2D.GLI.clear();
+		/* Draw */
+		WarpNoise2D.GLI.drawTriangles(indices.length);
+	});
+}
+</script>
+
+</html>

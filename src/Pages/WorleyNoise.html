@@ -1,0 +1,689 @@
+<html>
+<head>
+	<title>WebGL Collection - Worley Noise</title>
+	<link rel="stylesheet" type="text/css" href="../Styles/style.css" />
+	<script id="noise_vshader" type="x-shader/x-vertex">
+		attribute vec4 vPosition; //Vertex Position
+		attribute vec4 vColor; //Vertex color
+
+		varying vec4 fColor; //Fragment Color
+
+		void main() 
+		{
+			fColor = vColor;
+			gl_Position = vPosition;
+		}
+	</script>
+	<script id="noise_fshader" type="x-shader/x-fragment">
+		#define PI    3.1415926535897932384626433832795
+		#define TAU   6.2831853071795864769252867665590
+		#define SQRT2 1.4142135623730950488016887242096
+		
+		precision mediump float;
+
+		varying vec4 fColor; //Fragment Color
+		
+		uniform float frequency;// = 10.0;
+		uniform float amplitude;// = .5;
+		uniform float lacunarity;// = 2.0;
+		uniform float gain;// = .5;
+		uniform float seed;// = 127.457;
+		uniform vec2 resolution;// = 127.457;
+		uniform float time;
+		uniform float minkowskiNum;
+		float minkowskiDist(vec2 v)
+		{
+			//float mn = 2.*sin(time*.0003 + PI*minkowskiNum)+3.;
+			v = pow(abs(v),vec2(minkowskiNum));
+			return pow(v.x+v.y,1.0/minkowskiNum);
+		}
+		vec2 random2( vec2 p ) 
+		{
+			return fract(sin(vec2(dot(p+seed,vec2(127.1,311.7)),dot(p,vec2(269.5,183.3))))*43758.5453);
+		}
+		vec4 worley(vec2 p)
+		{
+			p*=frequency;
+			
+			vec2 f = floor(p);
+			
+			vec4 distances = vec4(128);///Arbitrary Larger
+			
+			for(int y=-1;y<2;++y)
+			{
+				for(int x=-1;x<2;++x)
+				{
+					vec2 cube = f+vec2(float(x),float(y));
+					vec2 point = random2(cube);
+					point = 0.5 + 0.5*sin(time*.001 + TAU*point);
+					point += cube;
+					float d = minkowskiDist(point-p);
+
+					for(int i=0;i<4;++i)
+					{
+						if(d<distances[i])
+						{
+							float tmp = distances[i];
+							distances[i] = d;
+							d = tmp;
+						}
+					}
+				}
+			}
+			distances/=minkowskiDist(vec2(1.0)); ///Normalizes Values accounting for +unit-cube diagonal length
+			return distances;
+		}
+
+		void main()
+		{
+			float res = 512.0;
+			vec2 p = (gl_FragCoord.xy)/res;
+
+			vec4 d = worley(p);
+			float n = d[0];
+			
+			gl_FragColor = vec4(vec3(n), 1.0);
+		}
+	</script>
+	<script id="noiseSub2_fshader" type="x-shader/x-fragment">
+		#define PI    3.1415926535897932384626433832795
+		#define TAU   6.2831853071795864769252867665590
+		#define SQRT2 1.4142135623730950488016887242096
+		
+		precision mediump float;
+
+		varying vec4 fColor; //Fragment Color
+		
+		uniform float frequency;// = 10.0;
+		uniform float amplitude;// = .5;
+		uniform float lacunarity;// = 2.0;
+		uniform float gain;// = .5;
+		uniform float seed;// = 127.457;
+		uniform vec2 resolution;// = 127.457;
+		uniform float time;
+		uniform float minkowskiNum;
+		
+		
+		float bounce(float x)
+		{
+			return .5*sin(x+.5*PI)+.5;
+		}
+		float minkowskiDist(vec2 v)
+		{
+			float mn = 5.0*bounce(time*.003)+1.0;
+			v = pow(abs(v),vec2(mn));
+			return pow(v.x+v.y,1.0/mn);
+		}
+		vec2 random2( vec2 p ) 
+		{
+			return fract(sin(vec2(dot(p+seed,vec2(127.1,311.7)),dot(p,vec2(269.5,183.3))))*43758.5453);
+		}
+		vec4 worley(vec2 p)
+		{
+			p*=frequency;
+			
+			vec2 f = floor(p);
+			
+			vec4 distances = vec4(128);///Arbitrary Larger
+			
+			for(int y=-1;y<2;++y)
+			{
+				for(int x=-1;x<2;++x)
+				{
+					vec2 cube = f+vec2(float(x),float(y));
+					vec2 point = random2(cube);
+					point += cube;
+					float d = minkowskiDist(point-p);
+
+					for(int i=0;i<4;++i)
+					{
+						if(d<distances[i])
+						{
+							float tmp = distances[i];
+							distances[i] = d;
+							d = tmp;
+						}
+					}
+				}
+			}
+			distances/=minkowskiDist(vec2(1.0)); ///Normalizes Values accounting for +unit-cube diagonal length
+			return distances;
+		}
+
+		void main()
+		{
+			float res = 512.0;
+			vec2 p = (gl_FragCoord.xy)/res;
+
+			vec4 d = worley(p);
+			float n = d[1]-d[0];
+			
+			gl_FragColor = vec4(vec3(n), 1.0);
+		}
+	</script>
+	<script id="noiseColor_fshader" type="x-shader/x-fragment">
+	#define PI    3.1415926535897932384626433832795
+	#define TAU   6.2831853071795864769252867665590
+	#define SQRT2 1.4142135623730950488016887242096
+	
+	precision mediump float;
+
+	varying vec4 fColor; //Fragment Color
+	
+	uniform float frequency;// = 10.0;
+	uniform float amplitude;// = .5;
+	uniform float lacunarity;// = 2.0;
+	uniform float gain;// = .5;
+	uniform float seed;// = 127.457;
+	uniform vec2 resolution;// = 127.457;
+	uniform float time;
+	uniform float minkowskiNum;
+	
+
+	float minkowskiDist(vec2 v)
+	{
+		v = pow(abs(v),vec2(minkowskiNum));
+		return pow(v.x+v.y,1.0/minkowskiNum);
+	}
+	vec2 random2( vec2 p ) 
+	{
+		return fract(sin(vec2(dot(p+seed,vec2(127.1,311.7)),dot(p,vec2(269.5,183.3))))*43758.5453);
+	}
+	float random(in vec2 p)
+	{
+	   return fract(sin(dot(p+seed,vec2(12.9898,78.233))) * 43758.5453);
+	}
+	vec4 worley(vec2 p, out vec2 pt)
+	{
+		p*=frequency;
+		
+		vec2 f = floor(p);
+		
+		vec4 distances = vec4(128);///Arbitrary Larger
+		
+		pt = vec2(0.);
+		
+		for(int y=-1;y<2;++y)
+		{
+			for(int x=-1;x<2;++x)
+			{
+				vec2 cube = f+vec2(float(x),float(y));
+				vec2 point = random2(cube);
+				point = 0.5 + 0.5*sin(time*.001 + TAU*point);
+				point += cube;
+				float d = minkowskiDist(point-p);
+
+				if(d<distances[0])
+				{
+					pt = cube;
+				}
+				for(int i=0;i<4;++i)
+				{
+					if(d<distances[i])
+					{
+						float tmp = distances[i];
+						distances[i] = d;
+						d = tmp;
+						
+					}
+				}
+			}
+		}
+		distances/=minkowskiDist(vec2(1.0)); ///Normalizes Values accounting for +unit-cube diagonal length
+		return distances;
+	}
+
+	void main()
+	{
+		float res=512.0;
+		vec2 p = (gl_FragCoord.xy)/res;
+		vec2 pt;
+		vec4 d = worley(p, pt);
+		vec3 color = vec3(pow(d[1]-d[0],.25));
+		color *= vec3(random(pt*11.0),random(pt*7.0),random(pt*13.0));
+		color *= .3*abs(sin(10.*TAU*(d[0])))+.7;
+		gl_FragColor = vec4(color, 1.0);
+	}
+</script>
+	<script id="noise3d_fshader" type="x-shader/x-fragment">
+	#define PI    3.1415926535897932384626433832795
+	#define TAU   6.2831853071795864769252867665590
+	#define SQRT2 1.4142135623730950488016887242096
+	
+	precision mediump float;
+
+	varying vec4 fColor; //Fragment Color
+	
+	uniform float frequency;// = 10.0;
+	uniform float amplitude;// = .5;
+	uniform float lacunarity;// = 2.0;
+	uniform float gain;// = .5;
+	uniform float seed;// = 127.457;
+	uniform vec2 resolution;// = 127.457;
+	uniform float time;
+	uniform float minkowskiNum;
+	
+
+	float minkowskiDist(vec3 v)
+	{
+		v = pow(abs(v),vec3(minkowskiNum));
+		return pow(v.x+v.y+v.z,1.0/minkowskiNum);
+	}
+	vec2 random2( vec2 p ) 
+	{
+		return fract(sin(vec2(dot(p+seed,vec2(127.1,311.7)),dot(p,vec2(269.5,183.3))))*43758.5453);
+	}
+	float random(in vec2 p)
+	{
+	   return fract(sin(dot(p+seed,vec2(12.9898,78.233))) * 43758.5453);
+	}
+	vec3 random3(vec3 p)
+	{
+		vec2 a = random2(p.xy+p.z);
+		float b = random(vec2(p.x*p.y,p.z));
+		return vec3(b,a);
+	}
+	vec4 worley(vec3 p, out vec3 pt)
+	{
+		p*=frequency;
+		
+		vec3 f = floor(p);
+		
+		vec4 distances = vec4(128);///Arbitrary Larger
+		
+		pt = vec3(0.);
+		
+		for(int z=-1;z<2;++z)
+		{
+			for(int y=-1;y<2;++y)
+			{
+				for(int x=-1;x<2;++x)
+				{
+					vec3 cube = f+vec3(float(x),float(y),float(z));
+					vec3 point = random3(cube);
+					//point = 0.5 + 0.5*sin(time*.001 + TAU*point);
+					point += cube;
+					float d = minkowskiDist(point-p);
+
+					if(d<distances[0])
+					{
+						pt = cube;
+					}
+					for(int i=0;i<4;++i)
+					{
+						if(d<distances[i])
+						{
+							float tmp = distances[i];
+							distances[i] = d;
+							d = tmp;
+							
+						}
+					}
+				}
+			}
+		}
+		distances/=minkowskiDist(vec3(1.0)); ///Normalizes Values accounting for +unit-cube diagonal length
+		return distances;
+	}
+
+	void main()
+	{
+		float res = 512.0;
+		vec2 p = (gl_FragCoord.xy)/res;
+		vec3 pt;
+		
+		vec4 d = worley(vec3(p,time*.00005), pt);
+		vec3 color = vec3(pow(d[1]-d[0],.25));
+		color *= random3(pt);
+		color *= 1.0-.3*d[0];
+		gl_FragColor = vec4(color, 1.0);
+	}
+</script>
+	<script id="noisefract_fshader" type="x-shader/x-fragment">
+	#define PI    3.1415926535897932384626433832795
+	#define TAU   6.2831853071795864769252867665590
+	#define SQRT2 1.4142135623730950488016887242096
+	
+	precision mediump float;
+
+	varying vec4 fColor; //Fragment Color
+	
+	uniform float frequency;// = 10.0;
+	uniform float amplitude;// = .5;
+	uniform float lacunarity;// = 2.0;
+	uniform float gain;// = .5;
+	uniform float seed;// = 127.457;
+	uniform vec2 resolution;// = 127.457;
+	uniform float time;
+	uniform float minkowskiNum;
+	
+	
+	float bounce(float x)
+	{
+		return .5*sin(x+.5*PI)+.5;
+	}
+	float minkowskiDist(vec2 v)
+	{
+		//float mn = 5.0*bounce(time*.003)+1.0;
+		v = pow(abs(v),vec2(minkowskiNum));
+		return pow(v.x+v.y,1.0/minkowskiNum);
+	}
+	vec2 random2( vec2 p ) 
+	{
+		return fract(sin(vec2(dot(p+seed,vec2(127.1,311.7)),dot(p,vec2(269.5,183.3))))*43758.5453);
+	}
+	vec4 worley(vec2 p)
+	{
+		p*=frequency;
+		
+		vec2 f = floor(p);
+		
+		vec4 distances = vec4(128);///Arbitrary Larger
+		
+		for(int y=-1;y<2;++y)
+		{
+			for(int x=-1;x<2;++x)
+			{
+				vec2 cube = f+vec2(float(x),float(y));
+				vec2 point = random2(cube);
+				point += cube;
+				float d = minkowskiDist(point-p);
+
+				for(int i=0;i<4;++i)
+				{
+					if(d<distances[i])
+					{
+						float tmp = distances[i];
+						distances[i] = d;
+						d = tmp;
+					}
+				}
+			}
+		}
+		distances/=minkowskiDist(vec2(1.0)); ///Normalizes Values accounting for +unit-cube diagonal length
+		return distances;
+	}
+	vec4 fbm4(vec2 p)
+	{
+		vec4 d = vec4(0.0);
+		float amp = amplitude;
+		float range = 0.0;
+		
+		d += worley(p)*amp; range+=amp; amp*=gain; p *= lacunarity;
+		d += worley(p)*amp; range+=amp; amp*=gain; p *= lacunarity;
+		d += worley(p)*amp; range+=amp; amp*=gain; p *= lacunarity;
+		d += worley(p)*amp; range+=amp; amp*=gain; p *= lacunarity;
+		return d/range;
+	}
+
+	void main()
+	{
+		float res = 512.0;
+		vec2 p = (gl_FragCoord.xy+time*.01)/res;
+
+		vec4 d = fbm4(p);
+		float n = d[1]-d[0];
+		
+		gl_FragColor = vec4(vec3(n), 1.0);
+	}
+</script>
+</head>
+
+
+<body>
+<svg style="display:none">
+	<symbol id="ReplaySymbol" viewBox="0 0 14 14">
+		<text x="50%" y="50%">&#x2B6F;</text>
+	</symbol>
+	
+	<symbol id="AudioSpeakerSymbol" viewBox="0 0 18 18">
+		<!-- Speaker Triangle -->
+		<polygon points="9,1 9,17 1,9" />
+		<!-- Speaker Box -->
+		<rect x="0" y="6" width="4" height="6" /> 
+	</symbol>
+	
+	<symbol id="AudioSpeakerWavesSymbol" viewBox="0 0 18 18">
+		<!-- Filler for easier CSS -->
+		<rect x="0" y="0" width="100%" height="100%" style="visibility: hidden;" />
+		<!-- Big Wave -->
+		<path d="M11,.23 A9,9,0,0,1,11,17.769 L11,15.694 A7,7,0,0,0,11,2.305 z" />
+		<!-- Small Wave -->
+		<path d="M11,4.955 A4.5,4.5,0,0,1,11,13.044 z" />
+	</symbol>
+	
+	<symbol id="AudioSpeakerSlashSymbol" viewBox="0 0 18 18">
+		<polygon points="1.5,.5 17.5,16.5 16,18 0,2" />
+	</symbol>
+	
+</svg>
+
+
+
+<header>
+	<h1>Worley Noise</h1>
+	<h3>Dakota Carmer</h3>
+</header>
+<a href="PerlinNoise.html" id="Prev">&lt;</a>
+<a href="#" id="Next">&gt;</a>
+<main>
+
+
+<figure class="webgl" id="WorleyNoise" alt="2D Worley Noise" data-vert="noise_vshader" data-frag="noise_fshader"></figure>
+<figure class="webgl" id="WorleyNoiseMinkowski" alt="2D Varying Minkowski Worley Noise Pair Difference" data-vert="noise_vshader" data-frag="noiseSub2_fshader"></figure>
+<figure class="webgl" id="WorleyNoiseColor" alt="2D Worley Noise Pair Difference" data-vert="noise_vshader" data-frag="noiseColor_fshader"></figure>
+<figure class="webgl" id="WorleyNoise3D" alt="3D Worley Noise Pair Difference" data-vert="noise_vshader" data-frag="noise3d_fshader"></figure>
+<figure class="webgl" id="WorleyNoiseFractal" alt="2D Fractal Worley Noise Pair Difference" data-vert="noise_vshader" data-frag="noisefract_fshader"></figure>
+
+</main>
+
+</body>
+<script src="../JS/script.js"></script>
+
+
+<script>
+{
+	const vertices = new Float32Array([
+		-1.0, -1.0,  0.0, 1.0,
+		-1.0,  1.0,  0.0, 1.0,
+		 1.0,  1.0,  0.0, 1.0,
+		 1.0, -1.0,  0.0, 1.0,
+	  ]);
+	const indices = new Uint8Array([
+		1, 0, 3,    3, 2, 1,
+	  ]);
+
+
+	let Noise = document.getElementById("WorleyNoise");
+	Noise.GLI.setupArrayBuff(vertices,"vPosition");
+	Noise.GLI.setupIndexBuff(indices, true);
+	
+	const frequencyLoc = Noise.GLI.getUniformLocation("frequency");
+	const amplitudeLoc = Noise.GLI.getUniformLocation("amplitude");
+	const lacunarityLoc = Noise.GLI.getUniformLocation("lacunarity");
+	const gainLoc = Noise.GLI.getUniformLocation("gain");
+	const seedLoc = Noise.GLI.getUniformLocation("seed");
+	const minkowskiNumLoc = Noise.GLI.getUniformLocation("minkowskiNum");
+
+
+	Noise.GLI.setUniformValue_F(frequencyLoc,10);
+	Noise.GLI.setUniformValue_F(amplitudeLoc,.5);
+	Noise.GLI.setUniformValue_F(lacunarityLoc,2);
+	Noise.GLI.setUniformValue_F(gainLoc,.5);
+	Noise.GLI.setUniformValue_F(seedLoc,123);
+	Noise.GLI.setUniformValue_F(minkowskiNumLoc,2);
+
+	Noise.addEventListener("render",(event)=>
+	{
+		/* Clear */
+		Noise.GLI.clear();
+		/* Draw */
+		Noise.GLI.drawTriangles(indices.length);
+	});
+}
+</script>
+<script>
+{
+	const vertices = new Float32Array([
+		-1.0, -1.0,  0.0, 1.0,
+		-1.0,  1.0,  0.0, 1.0,
+		 1.0,  1.0,  0.0, 1.0,
+		 1.0, -1.0,  0.0, 1.0,
+	  ]);
+	const indices = new Uint8Array([
+		1, 0, 3,    3, 2, 1,
+	  ]);
+
+
+  	let Noise = document.getElementById("WorleyNoiseMinkowski");
+	Noise.GLI.setupArrayBuff(vertices,"vPosition");
+	Noise.GLI.setupIndexBuff(indices, true);
+	
+	const frequencyLoc = Noise.GLI.getUniformLocation("frequency");
+	const amplitudeLoc = Noise.GLI.getUniformLocation("amplitude");
+	const lacunarityLoc = Noise.GLI.getUniformLocation("lacunarity");
+	const gainLoc = Noise.GLI.getUniformLocation("gain");
+	const seedLoc = Noise.GLI.getUniformLocation("seed");
+	const minkowskiNumLoc = Noise.GLI.getUniformLocation("minkowskiNum");
+
+
+	Noise.GLI.setUniformValue_F(frequencyLoc,10);
+	Noise.GLI.setUniformValue_F(amplitudeLoc,.5);
+	Noise.GLI.setUniformValue_F(lacunarityLoc,2);
+	Noise.GLI.setUniformValue_F(gainLoc,.5);
+	Noise.GLI.setUniformValue_F(seedLoc,123);
+	Noise.GLI.setUniformValue_F(minkowskiNumLoc,4);
+
+	Noise.addEventListener("render",(event)=>
+	{
+		/* Clear */
+		Noise.GLI.clear();
+		/* Draw */
+		Noise.GLI.drawTriangles(indices.length);
+	});
+}
+</script>
+<script>
+{
+	const vertices = new Float32Array([
+		-1.0, -1.0,  0.0, 1.0,
+		-1.0,  1.0,  0.0, 1.0,
+		 1.0,  1.0,  0.0, 1.0,
+		 1.0, -1.0,  0.0, 1.0,
+	  ]);
+	const indices = new Uint8Array([
+		1, 0, 3,    3, 2, 1,
+	  ]);
+
+
+  	let Noise = document.getElementById("WorleyNoiseColor");
+	Noise.GLI.setupArrayBuff(vertices,"vPosition");
+	Noise.GLI.setupIndexBuff(indices, true);
+	
+	const frequencyLoc = Noise.GLI.getUniformLocation("frequency");
+	const amplitudeLoc = Noise.GLI.getUniformLocation("amplitude");
+	const lacunarityLoc = Noise.GLI.getUniformLocation("lacunarity");
+	const gainLoc = Noise.GLI.getUniformLocation("gain");
+	const seedLoc = Noise.GLI.getUniformLocation("seed");
+	const minkowskiNumLoc = Noise.GLI.getUniformLocation("minkowskiNum");
+
+
+	Noise.GLI.setUniformValue_F(frequencyLoc,10);
+	Noise.GLI.setUniformValue_F(amplitudeLoc,.5);
+	Noise.GLI.setUniformValue_F(lacunarityLoc,2);
+	Noise.GLI.setUniformValue_F(gainLoc,.5);
+	Noise.GLI.setUniformValue_F(seedLoc,123);
+	Noise.GLI.setUniformValue_F(minkowskiNumLoc,2);
+
+	Noise.addEventListener("render",(event)=>
+	{
+		/* Clear */
+		Noise.GLI.clear();
+		/* Draw */
+		Noise.GLI.drawTriangles(indices.length);
+	});
+}
+</script>
+<script>
+{
+	const vertices = new Float32Array([
+		-1.0, -1.0,  0.0, 1.0,
+		-1.0,  1.0,  0.0, 1.0,
+		 1.0,  1.0,  0.0, 1.0,
+		 1.0, -1.0,  0.0, 1.0,
+	  ]);
+	const indices = new Uint8Array([
+		1, 0, 3,    3, 2, 1,
+	  ]);
+
+
+  	let Noise = document.getElementById("WorleyNoise3D");
+	Noise.GLI.setupArrayBuff(vertices,"vPosition");
+	Noise.GLI.setupIndexBuff(indices, true);
+	
+	const frequencyLoc = Noise.GLI.getUniformLocation("frequency");
+	const amplitudeLoc = Noise.GLI.getUniformLocation("amplitude");
+	const lacunarityLoc = Noise.GLI.getUniformLocation("lacunarity");
+	const gainLoc = Noise.GLI.getUniformLocation("gain");
+	const seedLoc = Noise.GLI.getUniformLocation("seed");
+	const minkowskiNumLoc = Noise.GLI.getUniformLocation("minkowskiNum");
+
+
+	Noise.GLI.setUniformValue_F(frequencyLoc,10);
+	Noise.GLI.setUniformValue_F(amplitudeLoc,.5);
+	Noise.GLI.setUniformValue_F(lacunarityLoc,2);
+	Noise.GLI.setUniformValue_F(gainLoc,.5);
+	Noise.GLI.setUniformValue_F(seedLoc,123);
+	Noise.GLI.setUniformValue_F(minkowskiNumLoc,2);
+
+	Noise.addEventListener("render",(event)=>
+	{
+		/* Clear */
+		Noise.GLI.clear();
+		/* Draw */
+		Noise.GLI.drawTriangles(indices.length);
+	});
+}
+</script>
+<script>
+{
+	const vertices = new Float32Array([
+		-1.0, -1.0,  0.0, 1.0,
+		-1.0,  1.0,  0.0, 1.0,
+		 1.0,  1.0,  0.0, 1.0,
+		 1.0, -1.0,  0.0, 1.0,
+	  ]);
+	const indices = new Uint8Array([
+		1, 0, 3,    3, 2, 1,
+	  ]);
+
+
+  	let Noise = document.getElementById("WorleyNoiseFractal");
+	Noise.GLI.setupArrayBuff(vertices,"vPosition");
+	Noise.GLI.setupIndexBuff(indices, true);
+	
+	const frequencyLoc = Noise.GLI.getUniformLocation("frequency");
+	const amplitudeLoc = Noise.GLI.getUniformLocation("amplitude");
+	const lacunarityLoc = Noise.GLI.getUniformLocation("lacunarity");
+	const gainLoc = Noise.GLI.getUniformLocation("gain");
+	const seedLoc = Noise.GLI.getUniformLocation("seed");
+	const minkowskiNumLoc = Noise.GLI.getUniformLocation("minkowskiNum");
+
+
+	Noise.GLI.setUniformValue_F(frequencyLoc,10);
+	Noise.GLI.setUniformValue_F(amplitudeLoc,.5);
+	Noise.GLI.setUniformValue_F(lacunarityLoc,2);
+	Noise.GLI.setUniformValue_F(gainLoc,.5);
+	Noise.GLI.setUniformValue_F(seedLoc,123);
+	Noise.GLI.setUniformValue_F(minkowskiNumLoc,2);
+
+	Noise.addEventListener("render",(event)=>
+	{
+		/* Clear */
+		Noise.GLI.clear();
+		/* Draw */
+		Noise.GLI.drawTriangles(indices.length);
+	});
+}
+</script>
+</html>
